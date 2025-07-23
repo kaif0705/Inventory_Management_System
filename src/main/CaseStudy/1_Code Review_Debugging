@@ -1,0 +1,50 @@
+Part 1: Code Review & Debugging
+
+//CODE
+@app.route('/api/products', methods=['POST'])
+
+def create_product():
+data = request.json
+
+# Create new product
+product = Product(
+name=data['name'],
+sku=data['sku'],
+price=data['price'],
+warehouse_id=data['warehouse_id']
+)
+db.session.add(product)
+db.session.commit()
+
+# Update inventory count
+inventory = Inventory(
+product_id=product.id,
+warehouse_id=data['warehouse_id'],
+quantity=data['initial_quantity']
+)
+db.session.add(inventory)
+db.session.commit()
+return {"message": "Product created", "product_id": product.id}
+
+            -----------------------------------CODE ENDS HERE-----------------------------------
+
+
+1. Identifying Issues & Explaining Impact
+
+a. Lack of Input Validation and its impact
+--> Data Inconsistency: Without validation, the database can be populated with incomplete or incorrect
+    data (e.g., null names, negative prices, invalid SKUs).
+
+b. Insufficient Error Handling and its impact
+--> Instead of clear error messages (e.g., "Product creation failed due to database error"), users will
+    receive generic 500 Internal Server Errors.
+    Debugging Challenges: Without specific error handling and logging, identifying the root cause of
+    issues in production becomes a major problem.
+
+c. No Unique Constraint Enforcement for SKU(Stock Keeping Units)
+--> Data Duplication and Inaccuracy: Multiple "Product" records could exist with the same SKU.
+
+d. Limited Response Detail
+--> Client applications (frontend) often need more information about the newly created resource than
+    just its ID
+
